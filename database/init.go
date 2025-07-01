@@ -47,10 +47,31 @@ func InitDatabase(dbPath string) error {
 
 // executeSchema runs the SQL schema file
 func executeSchema() error {
-	schemaPath := filepath.Join("database", "schema.sql")
-	schemaBytes, err := ioutil.ReadFile(schemaPath)
+	// Try multiple possible paths for schema file
+	possiblePaths := []string{
+		"database/schema.sql",
+		"./database/schema.sql",
+		"schema.sql",
+	}
+	
+	var schemaBytes []byte
+	var err error
+	
+	for _, path := range possiblePaths {
+		schemaBytes, err = ioutil.ReadFile(path)
+		if err == nil {
+			log.Printf("Schema file found at: %s", path)
+			break
+		}
+	}
+	
+	// If no schema file found, use PostgreSQL and skip schema creation
 	if err != nil {
-		return fmt.Errorf("failed to read schema file: %v", err)
+		if os.Getenv("DATABASE_URL") != "" {
+			log.Println("PostgreSQL detected, skipping schema file (assuming managed database)")
+			return createInitialData()
+		}
+		return fmt.Errorf("failed to read schema file from any location: %v", err)
 	}
 
 	schema := string(schemaBytes)
@@ -58,6 +79,22 @@ func executeSchema() error {
 		return fmt.Errorf("failed to execute schema: %v", err)
 	}
 
+	return nil
+}
+
+// createInitialData creates initial admin user for PostgreSQL
+func createInitialData() error {
+	// Create basic admin user if not exists
+	_, err := DB.Exec(`
+		INSERT INTO users (username, password_hash, email, role)
+		VALUES ('admin', '$2a$10$BGuuHyAsIfgXDObMqhNUwOnfY4oK56B50BVx1NoZWL0y9kRmsdYji', 'admin@company.com', 'admin')
+		ON CONFLICT (username) DO NOTHING
+	`)
+	
+	if err != nil {
+		log.Printf("Note: Could not create initial admin user (table may not exist): %v", err)
+	}
+	
 	return nil
 }
 

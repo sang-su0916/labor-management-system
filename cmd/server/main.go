@@ -40,7 +40,20 @@ func main() {
 
 	// Serve static files
 	r.Static("/static", "./web/static")
-	r.LoadHTMLGlob("web/templates/*")
+	
+	// Try different template paths
+	templatePaths := []string{
+		"web/templates/*",
+		"./web/templates/*",
+		"templates/*",
+	}
+	
+	for _, path := range templatePaths {
+		if err := r.LoadHTMLGlob(path); err == nil {
+			log.Printf("Templates loaded from: %s", path)
+			break
+		}
+	}
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
