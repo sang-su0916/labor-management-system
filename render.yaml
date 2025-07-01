@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: labor-management-system
+    env: go
+    plan: free
+    buildCommand: |
+      go mod download
+      mkdir -p bin
+      CGO_ENABLED=1 go build -o bin/main cmd/server/main.go
+      chmod +x start-render.sh
+    startCommand: ./start-render.sh
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: GIN_MODE
+        value: release
+    autoDeploy: false
+    
+databases:
+  - name: labor-management-db
+    plan: free
+    databaseName: labor_management
+    user: labor_user 

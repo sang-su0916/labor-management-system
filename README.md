@@ -51,6 +51,53 @@
 
 ## 🚀 빠른 시작
 
+### 배포 옵션
+
+#### 1. Render 배포 (추천 ⭐)
+[Render](https://render.com)는 무료 티어를 제공하며 Go 애플리케이션 배포에 최적화되어 있습니다.
+
+**배포 단계:**
+1. **GitHub에 코드 푸시**
+   ```bash
+   git add .
+   git commit -m "Render 배포 준비"
+   git push origin main
+   ```
+
+2. **Render 계정 생성**
+   - [render.com](https://render.com)에서 계정 생성
+   - GitHub 계정으로 로그인 가능
+
+3. **새 웹 서비스 생성**
+   - Dashboard에서 "New +" 클릭
+   - "Web Service" 선택
+   - GitHub 저장소 연결 (labor-management-system)
+
+4. **배포 설정**
+   - **Name**: `labor-management-system`
+   - **Environment**: `Go`
+   - **Build Command**: 
+     ```bash
+     go mod download && mkdir -p bin && CGO_ENABLED=1 go build -o bin/main cmd/server/main.go && chmod +x start-render.sh
+     ```
+   - **Start Command**: `./start-render.sh`
+   - **Plan**: Free
+
+5. **환경 변수 설정**
+   - `PORT`: `10000`
+   - `GIN_MODE`: `release`
+
+6. **배포 완료!** 🎉
+   - 자동으로 빌드 및 배포됩니다
+   - `https://your-app-name.onrender.com`으로 접속 가능
+
+#### 2. Railway 배포
+```yaml
+# railway.toml 사용
+```
+
+#### 3. 로컬 개발
+
 ### 사전 요구사항
 - Docker & Docker Compose
 - Git
