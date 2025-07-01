@@ -4,46 +4,46 @@ services:
     env: go
     plan: free
     buildCommand: |
-      echo "🔧 Build starting..."
+      echo 'Build starting...'
       pwd
       ls -la
       go version
       go mod download
       go mod verify
-      echo "📦 Creating bin directory..."
+      echo 'Creating bin directory...'
       mkdir -p bin
-      echo "🏗️ Building application with CGO..."
+      echo 'Building application with CGO...'
       if CGO_ENABLED=1 GOOS=linux go build -v -o bin/main ./cmd/server/main.go; then
-        echo "✅ CGO build successful"
+        echo 'CGO build successful'
       else
-        echo "⚠️ CGO build failed, trying without CGO..."
+        echo 'CGO build failed, trying without CGO...'
         if CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main.go; then
-          echo "✅ Non-CGO build successful"
+          echo 'Non-CGO build successful'
         else
-          echo "❌ Trying alternative path..."
+          echo 'Trying alternative path...'
           if CGO_ENABLED=1 GOOS=linux go build -v -o bin/main cmd/server/main.go; then
-            echo "✅ Alternative CGO build successful"
+            echo 'Alternative CGO build successful'
           else
-            echo "❌ All build attempts failed"
-            echo "📁 Debug info:"
+            echo 'All build attempts failed'
+            echo 'Debug info:'
             ls -la cmd/server/
             go env
             exit 1
           fi
         fi
       fi
-      echo "✅ Checking build result..."
+      echo 'Checking build result...'
       ls -la bin/
       if [ -f bin/main ]; then
-        echo "✅ Binary created successfully"
+        echo 'Binary created successfully'
         file bin/main
         chmod +x bin/main
       else
-        echo "❌ Binary file not found after build"
+        echo 'Binary file not found after build'
         exit 1
       fi
       chmod +x start-render.sh
-      echo "🎯 Build process completed"
+      echo 'Build process completed'
     startCommand: ./start-render.sh
     envVars:
       - key: PORT
