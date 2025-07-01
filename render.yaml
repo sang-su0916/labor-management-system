@@ -4,14 +4,46 @@ services:
     env: go
     plan: free
     buildCommand: |
+      echo "🔧 Build starting..."
+      pwd
+      ls -la
       go version
       go mod download
       go mod verify
+      echo "📦 Creating bin directory..."
       mkdir -p bin
-      CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o bin/main cmd/server/main.go
-      chmod +x start-render.sh
+      echo "🏗️ Building application with CGO..."
+      if CGO_ENABLED=1 GOOS=linux go build -v -o bin/main ./cmd/server/main.go; then
+        echo "✅ CGO build successful"
+      else
+        echo "⚠️ CGO build failed, trying without CGO..."
+        if CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main.go; then
+          echo "✅ Non-CGO build successful"
+        else
+          echo "❌ Trying alternative path..."
+          if CGO_ENABLED=1 GOOS=linux go build -v -o bin/main cmd/server/main.go; then
+            echo "✅ Alternative CGO build successful"
+          else
+            echo "❌ All build attempts failed"
+            echo "📁 Debug info:"
+            ls -la cmd/server/
+            go env
+            exit 1
+          fi
+        fi
+      fi
+      echo "✅ Checking build result..."
       ls -la bin/
-      file bin/main
+      if [ -f bin/main ]; then
+        echo "✅ Binary created successfully"
+        file bin/main
+        chmod +x bin/main
+      else
+        echo "❌ Binary file not found after build"
+        exit 1
+      fi
+      chmod +x start-render.sh
+      echo "🎯 Build process completed"
     startCommand: ./start-render.sh
     envVars:
       - key: PORT
