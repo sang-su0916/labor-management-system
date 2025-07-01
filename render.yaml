@@ -8,18 +8,27 @@ services:
       echo 'Step 1: Environment check'
       pwd
       go version
-      echo 'Step 2: Dependencies'
+      echo 'Step 2: Dependencies and Build Preparation'
       go mod download
+      go mod tidy
+      echo 'Checking if Gin is available...'
+      go list -m github.com/gin-gonic/gin || echo 'Gin not found, adding...'
+      go get github.com/gin-gonic/gin@latest
+      go mod download github.com/gin-gonic/gin
+      go mod tidy
+      echo 'Verifying Gin installation:'
+      go list -m github.com/gin-gonic/gin
       go mod verify
       echo 'Step 3: Source verification'
       ls -la cmd/server/
-      cat cmd/server/main.go | head -20
       echo 'Step 4: Clean build'
       rm -rf bin/
       mkdir -p bin
       echo 'Step 5: Build attempt 1 - Gin framework test'
       echo 'Using Gin server: main_gin.go'
       ls -la cmd/server/main_gin.go
+      echo 'Testing Gin availability:'
+      go list -m github.com/gin-gonic/gin
       CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main_gin.go 2>&1 || BUILD1_FAILED=1
       if [ -f bin/main ]; then
         echo 'SUCCESS: Gin framework build completed'
