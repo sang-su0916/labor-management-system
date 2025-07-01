@@ -24,17 +24,17 @@ services:
       echo 'Step 4: Clean build'
       rm -rf bin/
       mkdir -p bin
-      echo 'Step 5: Build attempt 1 - Static files server'
-      echo 'Using static files server: main_static.go'
-      ls -la cmd/server/main_static.go
+      echo 'Step 5: Build attempt 1 - Gin framework test (verified working)'
+      echo 'Using Gin server: main_gin.go'
+      ls -la cmd/server/main_gin.go
       echo 'Testing Gin availability:'
       go list -m github.com/gin-gonic/gin
-      CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main_static.go 2>&1 || BUILD1_FAILED=1
+      CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main_gin.go 2>&1 || BUILD1_FAILED=1
       if [ -f bin/main ]; then
-        echo 'SUCCESS: Static files server build completed'
+        echo 'SUCCESS: Gin framework build completed'
         ls -la bin/main
         file bin/main
-        echo 'Binary should start static files server on 0.0.0.0:10000'
+        echo 'Binary should start Gin server on 0.0.0.0:10000'
       elif [ "$BUILD1_FAILED" = "1" ]; then
         echo 'Step 6: Build attempt 2 - Fallback to simple server'
         rm -f bin/main
