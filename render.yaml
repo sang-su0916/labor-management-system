@@ -18,17 +18,19 @@ services:
       rm -rf bin/
       mkdir -p bin
       echo 'Step 5: Build attempt 1 - Gin framework test'
+      echo 'Using Gin server: main_gin.go'
+      ls -la cmd/server/main_gin.go
       CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main_gin.go 2>&1 || BUILD1_FAILED=1
       if [ -f bin/main ]; then
-        echo 'SUCCESS: Simple CGO disabled build completed'
+        echo 'SUCCESS: Gin framework build completed'
         ls -la bin/main
         file bin/main
+        echo 'Binary should start Gin server on 0.0.0.0:10000'
       elif [ "$BUILD1_FAILED" = "1" ]; then
-        echo 'Step 6: Build attempt 2 - PostgreSQL specific'
+        echo 'Step 6: Build attempt 2 - Fallback to simple server'
         rm -f bin/main
-        echo 'Copying PostgreSQL database init...'
-        cp database/init_postgres.go database/init.go
-        CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main.go 2>&1 || BUILD2_FAILED=1
+        echo 'Using simple server: main_simple.go'
+        CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main_simple.go 2>&1 || BUILD2_FAILED=1
         if [ -f bin/main ]; then
           echo 'SUCCESS: PostgreSQL specific build completed'
           ls -la bin/main
