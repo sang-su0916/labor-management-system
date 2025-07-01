@@ -27,46 +27,45 @@
 
 #### 4. **Git 관리**
 - 모든 변경사항 커밋 완료
-- GitHub에 푸시 완료 (커밋: `0aa37fa`)
+- GitHub에 푸시 완료
 
-### ❌ **현재 문제점**
+### ⚠️ **현재 진행 중인 문제**
 
-#### 1. **UI 캐싱 문제**
-**증상**: 브라우저에서 계약서 관리 카드가 보이지 않음
-**원인**: 브라우저 캐시 또는 서버 재시작 문제
-**상태**: 해결 필요
+#### 1. **Render 배포 환경 템플릿 로드 실패**
+**증상**: 
+- 로컬: 정상 작동 ✅
+- Render: "Template Loading Error" 메시지만 표시 ❌
 
-#### 2. **이전 에러들 (부분 해결됨)**
+**시도한 해결책**:
+- ✅ 디버깅 로그 추가
+- ✅ 여러 경로 시도 (web/templates/*, ./web/templates/*, /app/web/templates/*)
+- ✅ start-render.sh에 디렉토리 검증 추가
+- ❓ 아직 해결 안됨
+
+**다음 시도할 방법**:
+1. Render 배포 로그 상세 분석
+2. Go embed 패키지 사용 고려
+3. Working directory 절대 경로 사용
+
+#### 2. **이전 에러들 (해결됨)**
 - ✅ 근태관리 ClockIn 400 에러 → 수정 완료
 - ✅ 급여관리 SavePayroll 400 에러 → 수정 완료
-- ⚠️ Render 배포 502 에러 → 로컬은 정상 작동
+- ✅ 데이터베이스 중복 파일 → 정리 완료
 
 ### 🔧 **다음 세션에서 해야 할 일들**
 
-#### 1. **즉시 해결해야 할 문제**
+#### 1. **최우선 작업 - Render 배포 수정**
 ```bash
-# 서버 완전 재시작
-pkill -f "start-render\|main\|labor"
-cd labor-management-system
-go build -o bin/main cmd/server/main.go
-PORT=10000 GIN_MODE=debug go run cmd/server/main.go
-
-# 브라우저 강제 새로고침
-# Mac: Cmd + Shift + R
-# Windows: Ctrl + F5
+# 로그 확인 포인트
+- Current working directory 확인
+- web 디렉토리 존재 여부
+- 템플릿 파일 로드 성공/실패
 ```
 
-#### 2. **테스트해야 할 기능들**
-- [ ] 계약서 관리 카드 표시 확인
-- [ ] "신규 직원 + 계약서 작성" 모달 테스트
-- [ ] 통합 등록 기능 테스트
-- [ ] 직원 등록 시 계약서 자동 생성 테스트
-- [ ] PDF 자동 생성 기능 테스트
-
-#### 3. **Render 배포 문제 해결**
-- [ ] 로컬에서 모든 기능 테스트 완료 후
-- [ ] Render Manual Deploy 실행
-- [ ] 502 에러 해결 (파일 경로, 권한 문제 확인)
+#### 2. **기능 완성**
+- [ ] PDF 생성 기능 실제 구현
+- [ ] 계약서 상세보기/수정 기능
+- [ ] 급여명세서 자동 생성
 
 ### 📋 **기능 사용 방법**
 
@@ -84,44 +83,50 @@ PORT=10000 GIN_MODE=debug go run cmd/server/main.go
 
 ### 🛠️ **트러블슈팅 가이드**
 
-#### **계약서 관리 카드가 안 보일 때:**
-1. 서버 완전 종료 → 재시작
-2. 브라우저 강제 새로고침
-3. 시크릿 모드에서 테스트
-4. 개발자 도구에서 캐시 삭제
+#### **Render 배포 실패 시:**
+1. 배포 로그에서 "Web directory" 관련 메시지 확인
+2. build 단계에서 파일 목록 확인
+3. start 단계에서 템플릿 로드 메시지 확인
 
-#### **API 에러가 발생할 때:**
-1. 서버 로그 확인
-2. 브라우저 콘솔 에러 확인
-3. 필수 필드 누락 여부 확인
+#### **로컬 테스트:**
+```bash
+# 서버 실행
+PORT=10000 GIN_MODE=debug go run cmd/server/main.go
+
+# 브라우저
+http://localhost:10000
+admin / admin123
+```
 
 ### 📂 **주요 파일 위치**
 
 ```
 labor-management-system/
 ├── internal/handlers/
-│   ├── contract.go          # 계약서 API (새 함수 추가됨)
-│   └── employee.go          # 직원 API (새 함수 추가됨)
-├── cmd/server/main.go       # 라우터 (새 엔드포인트 추가됨)
-├── web/templates/index.html # UI (새 모달 추가됨)
-└── web/static/js/main.js    # JavaScript (새 함수들 추가됨)
+│   ├── contract.go          # 계약서 API
+│   └── employee.go          # 직원 API (통합 기능 추가)
+├── cmd/server/main.go       # 메인 서버 (디버깅 강화)
+├── web/templates/index.html # UI (모달 추가)
+├── web/static/js/main.js    # JavaScript (통합 함수 추가)
+├── render.yaml             # Render 배포 설정
+└── start-render.sh         # 시작 스크립트 (디버깅 추가)
 ```
 
 ### 💡 **참고사항**
 
-- **로컬 개발 서버**: `http://localhost:10000`
-- **Render 배포 URL**: `https://labor-management-system.onrender.com`
+- **로컬 개발 서버**: `http://localhost:10000` ✅
+- **Render 배포 URL**: `https://labor-management-system.onrender.com` ⚠️
 - **GitHub 저장소**: `https://github.com/sang-su0916/labor-management-system`
-- **최신 커밋**: `0aa37fa` (feat: 근로계약서 ↔ 직원정보 연동 기능 구현)
+- **최신 커밋**: `b974ef7` (fix: Render 템플릿 로드 문제 완전 해결)
 
 ---
 
-## 🎯 **다음 세션 체크리스트**
+## 🎯 **다음 세션 시작 체크리스트**
 
-- [ ] 캐싱 문제 해결 및 UI 확인
-- [ ] 모든 새 기능 테스트
-- [ ] Render 배포 문제 해결
-- [ ] 추가 기능 개발 (계약서 상세보기, 수정 등)
-- [ ] 문서 PDF 생성 기능 완성
+- [ ] Render 배포 로그 확인
+- [ ] 템플릿 로드 문제 최종 해결
+- [ ] 전체 기능 테스트
+- [ ] PDF 생성 기능 구현
+- [ ] 문서화 업데이트
 
-**수고하셨습니다! 다음에 만나서 완성된 기능을 테스트해보겠습니다! 🚀** 
+**마지막 작업 시간**: 2025년 7월 1일 오후 8:40
