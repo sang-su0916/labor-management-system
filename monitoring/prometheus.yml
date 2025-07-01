@@ -1,0 +1,40 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus 자체 모니터링
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # 노무관리 시스템 애플리케이션
+  - job_name: 'labor-management'
+    static_configs:
+      - targets: ['labor-management:8080']
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+
+  # PostgreSQL 모니터링
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+
+  # Redis 모니터링
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  # Nginx 모니터링
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:80']
+
+  # 시스템 메트릭 (Node Exporter)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']

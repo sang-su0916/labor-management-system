@@ -1,0 +1,66 @@
+# 데이터베이스 파일
+*.db
+*.sqlite
+*.sqlite3
+
+# 환경설정 파일 (보안)
+.env
+.env.local
+.env.production
+
+# 로그 파일
+logs/
+*.log
+
+# 생성된 문서 (PDF 등)
+documents/*.pdf
+uploads/*
+
+# Go 빌드 파일
+main
+labor-management-system
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 테스트 파일
+*.test
+*.out
+
+# Go 모듈 캐시
+go.sum
+
+# IDE 파일
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS 파일
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 임시 파일
+tmp/
+temp/
+*.tmp
+
+# Node.js (만약 나중에 추가될 경우)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Docker
+.dockerignore
+
+# 백업 파일
+*.bak
+*.backup

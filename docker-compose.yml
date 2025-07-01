@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # 메인 애플리케이션
+  labor-management:
+    build: .
+    container_name: labor-management-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - GIN_MODE=release
+      - DB_TYPE=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=labor_user
+      - DB_PASSWORD=secure_password123
+      - DB_NAME=labor_management
+      - JWT_SECRET=super_secret_jwt_key_for_production
+    volumes:
+      - ./documents:/app/documents
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - ./data:/app/data
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - labor-network
+
+  # PostgreSQL 데이터베이스
+  postgres:
+    image: postgres:15-alpine
+    container_name: labor-management-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=labor_management
+      - POSTGRES_USER=labor_user
+      - POSTGRES_PASSWORD=secure_password123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/postgres_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - labor-network
+
+  # Redis (캐싱 및 세션 관리용)
+  redis:
+    image: redis:7-alpine
+    container_name: labor-management-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - labor-network
+
+  # Nginx (리버스 프록시 및 정적 파일 서빙)
+  nginx:
+    image: nginx:alpine
+    container_name: labor-management-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./web/static:/var/www/static
+    depends_on:
+      - labor-management
+    networks:
+      - labor-network
+
+  # 모니터링 (Prometheus)
+  prometheus:
+    image: prom/prometheus
+    container_name: labor-management-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - labor-network
+
+  # 모니터링 대시보드 (Grafana)
+  grafana:
+    image: grafana/grafana
+    container_name: labor-management-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - labor-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  labor-network:
+    driver: bridge
