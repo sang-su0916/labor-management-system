@@ -28,9 +28,20 @@ WORKDIR /root/
 COPY --from=builder /app/main .
 COPY --from=builder /app/web ./web
 COPY --from=builder /app/database ./database
+COPY --from=builder /app/start-render.sh .
+
+# 필요한 디렉토리 생성
+RUN mkdir -p ./documents ./uploads ./logs
+
+# 스크립트 실행 권한 부여
+RUN chmod +x start-render.sh
+
+# 환경 변수 설정
+ENV GIN_MODE=release
+ENV PORT=10000
 
 # 포트 노출
 EXPOSE 10000
 
-# 애플리케이션 실행
-CMD ["./main"] 
+# 시작 스크립트 실행
+CMD ["./start-render.sh"] 

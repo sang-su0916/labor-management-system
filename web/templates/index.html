@@ -57,58 +57,62 @@
                     <div class="row">
                         <div class="col-md-12">
                             <h2>대시보드</h2>
+                            <!-- First Row -->
                             <div class="row mt-4">
                                 <!-- Employee Management -->
-                                <div class="col-md-3 mb-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h5 class="card-title">직원 관리</h5>
-                                            <p class="card-text">직원 정보 등록 및 관리</p>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center d-flex flex-column">
+                                            <h5 class="card-title">👥 직원 관리</h5>
+                                            <p class="card-text flex-grow-1">직원 정보 등록 및 관리</p>
                                             <button class="btn btn-primary" onclick="loadEmployees()">직원 목록</button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Attendance Management -->
-                                <div class="col-md-3 mb-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h5 class="card-title">근태 관리</h5>
-                                            <p class="card-text">출퇴근 및 근무 시간 관리</p>
-                                            <button class="btn btn-success" onclick="loadAttendance()">근태 현황</button>
+                                <!-- Contract Management -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center d-flex flex-column">
+                                            <h5 class="card-title">📋 계약서 관리</h5>
+                                            <p class="card-text flex-grow-1">근로계약서 작성 및 관리</p>
+                                            <button class="btn btn-secondary" onclick="loadContracts()">계약서 현황</button>
                                         </div>
                                     </div>
                                 </div>
 
+                                <!-- Attendance Management -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center d-flex flex-column">
+                                            <h5 class="card-title">⏰ 근태 관리</h5>
+                                            <p class="card-text flex-grow-1">출퇴근 및 근무 시간 관리</p>
+                                            <button class="btn btn-success" onclick="loadAttendance()">근태 현황</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Second Row -->
+                            <div class="row">
                                 <!-- Leave Management -->
-                                <div class="col-md-3 mb-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h5 class="card-title">휴가 관리</h5>
-                                            <p class="card-text">휴가 신청 및 승인 관리</p>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center d-flex flex-column">
+                                            <h5 class="card-title">🏖️ 휴가 관리</h5>
+                                            <p class="card-text flex-grow-1">휴가 신청 및 승인 관리</p>
                                             <button class="btn btn-warning" onclick="loadLeaves()">휴가 현황</button>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Payroll Management -->
-                                <div class="col-md-3 mb-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h5 class="card-title">급여 관리</h5>
-                                            <p class="card-text">급여 계산 및 명세서 발급</p>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center d-flex flex-column">
+                                            <h5 class="card-title">💰 급여 관리</h5>
+                                            <p class="card-text flex-grow-1">급여 계산 및 명세서 발급</p>
                                             <button class="btn btn-info" onclick="loadPayroll()">급여 현황</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Contract Management -->
-                                <div class="col-md-3 mb-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h5 class="card-title">계약서 관리</h5>
-                                            <p class="card-text">근로계약서 작성 및 관리</p>
-                                            <button class="btn btn-secondary" onclick="loadContracts()">계약서 현황</button>
                                         </div>
                                     </div>
                                 </div>

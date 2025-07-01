@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -38,11 +39,35 @@ func main() {
 	// Add middleware
 	r.Use(middleware.CORSMiddleware())
 
-	// Serve static files
-	r.Static("/static", "./web/static")
+	// Serve static files - try multiple paths
+	staticPaths := []string{"./web/static", "web/static", "/app/web/static"}
+	staticFound := false
+	for _, path := range staticPaths {
+		if _, err := os.Stat(path); err == nil {
+			r.Static("/static", path)
+			log.Printf("Static files served from: %s", path)
+			staticFound = true
+			break
+		}
+	}
+	if !staticFound {
+		log.Println("Warning: No static files directory found")
+	}
 	
-	// Load HTML templates
-	r.LoadHTMLGlob("web/templates/*")
+	// Load HTML templates - try multiple paths
+	templatePaths := []string{"web/templates/*", "./web/templates/*", "/app/web/templates/*"}
+	templateFound := false
+	for _, pattern := range templatePaths {
+		if matches, _ := filepath.Glob(pattern); len(matches) > 0 {
+			r.LoadHTMLGlob(pattern)
+			log.Printf("Templates loaded from: %s", pattern)
+			templateFound = true
+			break
+		}
+	}
+	if !templateFound {
+		log.Println("Warning: No template files found")
+	}
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
