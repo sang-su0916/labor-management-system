@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -17,31 +18,58 @@ var DB *sql.DB
 func InitDatabase(dbPath string) error {
 	var err error
 	
-	// Check if DATABASE_URL is set (Railway PostgreSQL)
+	// Check if DATABASE_URL is set (Render PostgreSQL)
 	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
-		log.Println("Using PostgreSQL database")
+		log.Println("🐘 Using PostgreSQL database")
+		log.Printf("📊 Database URL: %s", maskDatabaseURL(databaseURL))
 		DB, err = sql.Open("postgres", databaseURL)
+		if err != nil {
+			return fmt.Errorf("failed to open PostgreSQL connection: %v", err)
+		}
 	} else {
-		log.Println("Using SQLite database")
+		log.Println("🗄️ Using SQLite database")
+		log.Printf("📊 Database path: %s", dbPath)
 		DB, err = sql.Open("sqlite3", dbPath+"?_foreign_keys=1")
+		if err != nil {
+			return fmt.Errorf("failed to open SQLite connection: %v", err)
+		}
+	}
+
+	// Test the connection with retry
+	maxRetries := 5
+	for i := 0; i < maxRetries; i++ {
+		err = DB.Ping()
+		if err == nil {
+			break
+		}
+		log.Printf("⚠️ Database connection attempt %d/%d failed: %v", i+1, maxRetries, err)
+		if i < maxRetries-1 {
+			time.Sleep(time.Duration(i+1) * time.Second)
+		}
 	}
 	
 	if err != nil {
-		return fmt.Errorf("failed to open database: %v", err)
+		return fmt.Errorf("failed to ping database after %d attempts: %v", maxRetries, err)
 	}
 
-	// Test the connection
-	if err = DB.Ping(); err != nil {
-		return fmt.Errorf("failed to ping database: %v", err)
-	}
+	log.Println("✅ Database connection established")
 
 	// Execute schema
 	if err = executeSchema(); err != nil {
 		return fmt.Errorf("failed to execute schema: %v", err)
 	}
 
-	log.Println("Database initialized successfully")
+	log.Println("✅ Database initialized successfully")
 	return nil
+}
+
+// maskDatabaseURL masks sensitive information in database URL for logging
+func maskDatabaseURL(url string) string {
+	// Simple masking - hide password
+	if len(url) > 20 {
+		return url[:10] + "****" + url[len(url)-10:]
+	}
+	return "****"
 }
 
 // executeSchema runs the SQL schema file

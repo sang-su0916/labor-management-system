@@ -170,9 +170,13 @@ func main() {
 	// Get port from environment
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "10000"
 	}
 
-	log.Printf("Server starting on :%s", port)
-	log.Fatal(r.Run(":" + port))
+	// Bind to all interfaces for cloud deployment
+	host := "0.0.0.0"
+	addr := host + ":" + port
+
+	log.Printf("Server starting on %s", addr)
+	log.Fatal(r.Run(addr))
 }
