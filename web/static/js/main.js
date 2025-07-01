@@ -40,6 +40,15 @@ function setupEventListeners() {
         if (e.target.id === 'payrollEmployee') {
             loadEmployeeSalary();
         }
+        // Contract generation checkbox
+        if (e.target.id === 'generateContract') {
+            const contractOptions = document.getElementById('contractOptions');
+            if (e.target.checked) {
+                contractOptions.classList.remove('d-none');
+            } else {
+                contractOptions.classList.add('d-none');
+            }
+        }
     });
 }
 
@@ -499,45 +508,8 @@ function showAddLeaveModal() {
 
 // Employee functions
 async function saveEmployee() {
-    const form = document.getElementById('employeeForm');
-    const employeeId = document.getElementById('employeeId').value;
-    
-    const employeeData = {
-        name: document.getElementById('employeeName').value,
-        employee_number: document.getElementById('employeeNumber').value,
-        department: document.getElementById('department').value,
-        position: document.getElementById('position').value,
-        hire_date: document.getElementById('hireDate').value,
-        salary: parseFloat(document.getElementById('salary').value) || 0,
-        phone: document.getElementById('phone').value,
-        email: document.getElementById('email').value,
-        address: document.getElementById('address').value
-    };
-    
-    if (!employeeData.name || !employeeData.employee_number || !employeeData.department || 
-        !employeeData.position || !employeeData.hire_date) {
-        showAlert('필수 항목을 모두 입력해주세요.', 'warning');
-        return;
-    }
-    
-    try {
-        const method = employeeId ? 'PUT' : 'POST';
-        const endpoint = employeeId ? `/employees/${employeeId}` : '/employees';
-        
-        await apiCall(endpoint, {
-            method: method,
-            body: JSON.stringify(employeeData)
-        });
-        
-        showAlert(`직원이 성공적으로 ${employeeId ? '수정' : '추가'}되었습니다.`, 'success');
-        
-        // Close modal and refresh list
-        bootstrap.Modal.getInstance(document.getElementById('employeeModal')).hide();
-        loadEmployees();
-        
-    } catch (error) {
-        showAlert(error.message, 'danger');
-    }
+    // Call the enhanced function that handles contract generation
+    await saveEmployeeWithContract();
 }
 
 async function editEmployee(id) {
@@ -616,22 +588,34 @@ function calculatePayroll() {
 }
 
 async function savePayroll() {
+    const payPeriod = document.getElementById('payPeriod').value;
+    
+    // Convert month input (2025-07) to start/end dates
+    let payPeriodStart = '';
+    let payPeriodEnd = '';
+    
+    if (payPeriod) {
+        const [year, month] = payPeriod.split('-');
+        payPeriodStart = `${year}-${month}-01`;
+        
+        // Get last day of month
+        const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+        payPeriodEnd = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
+    }
+    
     const payrollData = {
         employee_id: parseInt(document.getElementById('payrollEmployee').value),
-        pay_period: document.getElementById('payPeriod').value,
+        pay_period_start: payPeriodStart,
+        pay_period_end: payPeriodEnd,
         base_salary: parseFloat(document.getElementById('baseSalary').value),
         allowances: parseFloat(document.getElementById('allowances').value) || 0,
         bonus: parseFloat(document.getElementById('bonus').value) || 0,
-        gross_pay: parseFloat(document.getElementById('grossPay').value),
-        income_tax: parseFloat(document.getElementById('incomeTax').value),
-        national_pension: parseFloat(document.getElementById('nationalPension').value),
-        health_insurance: parseFloat(document.getElementById('healthInsurance').value),
-        employment_insurance: parseFloat(document.getElementById('employmentInsurance').value),
-        total_deductions: parseFloat(document.getElementById('totalDeductions').value),
-        net_pay: parseFloat(document.getElementById('netPay').value)
+        overtime_hours: 0, // Default values for required fields
+        holiday_hours: 0,
+        other_deductions: 0
     };
     
-    if (!payrollData.employee_id || !payrollData.pay_period || !payrollData.base_salary) {
+    if (!payrollData.employee_id || !payPeriod || !payrollData.base_salary) {
         showAlert('필수 항목을 모두 입력하고 급여를 계산해주세요.', 'warning');
         return;
     }
@@ -757,10 +741,21 @@ async function rejectLeave(id) {
 
 // Attendance functions
 async function clockIn() {
+    // Find current user's employee record
+    if (!currentEmployees.length) {
+        await loadEmployees();
+    }
+    
+    const userEmployee = currentEmployees.find(emp => emp.name === currentUser.username);
+    if (!userEmployee) {
+        showAlert('직원 정보를 찾을 수 없습니다. 관리자에게 문의하세요.', 'danger');
+        return;
+    }
+    
     try {
         await apiCall('/attendance/clock-in', {
             method: 'POST',
-            body: JSON.stringify({ employee_id: currentUser.id })
+            body: JSON.stringify({ employee_id: userEmployee.id })
         });
         
         showAlert('출근이 기록되었습니다.', 'success');
@@ -771,10 +766,21 @@ async function clockIn() {
 }
 
 async function clockOut() {
+    // Find current user's employee record
+    if (!currentEmployees.length) {
+        await loadEmployees();
+    }
+    
+    const userEmployee = currentEmployees.find(emp => emp.name === currentUser.username);
+    if (!userEmployee) {
+        showAlert('직원 정보를 찾을 수 없습니다. 관리자에게 문의하세요.', 'danger');
+        return;
+    }
+    
     try {
         await apiCall('/attendance/clock-out', {
             method: 'POST',
-            body: JSON.stringify({ employee_id: currentUser.id })
+            body: JSON.stringify({ employee_id: userEmployee.id })
         });
         
         showAlert('퇴근이 기록되었습니다.', 'success');
@@ -843,4 +849,235 @@ function getStatusLabel(status) {
 
 function viewEmployee(id) {
     editEmployee(id);
+}
+
+// Contract Management Functions
+async function loadContracts() {
+    try {
+        const data = await apiCall('/contracts');
+        displayContracts(data.contracts || []);
+    } catch (error) {
+        showAlert(error.message, 'danger');
+    }
+}
+
+function displayContracts(contracts) {
+    const contentArea = document.getElementById('contentArea');
+    
+    let html = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4>근로계약서 현황</h4>
+            <div>
+                <button class="btn btn-success" onclick="showContractEmployeeModal()">
+                    <i class="fas fa-plus"></i> 신규 직원 + 계약서 작성
+                </button>
+                <button class="btn btn-primary" onclick="showAddEmployeeModal()">
+                    <i class="fas fa-user-plus"></i> 직원만 추가
+                </button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>직원명</th>
+                        <th>사번</th>
+                        <th>계약유형</th>
+                        <th>시작일</th>
+                        <th>종료일</th>
+                        <th>급여</th>
+                        <th>상태</th>
+                        <th>액션</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    contracts.forEach(contract => {
+        const contractData = contract.contract;
+        html += `
+            <tr>
+                <td>${contract.employee_name}</td>
+                <td>${contract.employee_number}</td>
+                <td>${getContractTypeLabel(contractData.contract_type)}</td>
+                <td>${formatDate(contractData.start_date)}</td>
+                <td>${contractData.end_date ? formatDate(contractData.end_date) : '무기한'}</td>
+                <td>${formatCurrency(contractData.base_salary)}</td>
+                <td><span class="status-badge ${contractData.is_active ? 'status-approved' : 'status-inactive'}">${contractData.is_active ? '활성' : '비활성'}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewContract(${contractData.id})">보기</button>
+                    <button class="btn btn-sm btn-outline-info" onclick="generateContractPDF(${contractData.employee_id})">PDF</button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="editContract(${contractData.id})">수정</button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    contentArea.innerHTML = html;
+}
+
+// Contract + Employee Integration Functions
+function showContractEmployeeModal() {
+    document.getElementById('contractEmployeeForm').reset();
+    
+    // Set default start date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('ce_startDate').value = today;
+    
+    const modal = new bootstrap.Modal(document.getElementById('contractEmployeeModal'));
+    modal.show();
+}
+
+async function saveContractWithEmployee() {
+    const contractEmployeeData = {
+        // Employee information
+        employee_name: document.getElementById('ce_name').value,
+        employee_number: document.getElementById('ce_employeeNumber').value,
+        department: document.getElementById('ce_department').value,
+        position: document.getElementById('ce_position').value,
+        phone: document.getElementById('ce_phone').value,
+        email: document.getElementById('ce_email').value,
+        address: document.getElementById('ce_address').value,
+        
+        // Contract information
+        contract_type: document.getElementById('ce_contractType').value,
+        start_date: document.getElementById('ce_startDate').value,
+        workplace: document.getElementById('ce_workplace').value,
+        working_hours: document.getElementById('ce_workingHours').value,
+        work_days: document.getElementById('ce_workDays').value,
+        base_salary: parseFloat(document.getElementById('ce_baseSalary').value),
+        job_description: document.getElementById('ce_jobDescription').value,
+        benefits: document.getElementById('ce_benefits').value,
+        contract_terms: "회사 규정에 따름"
+    };
+    
+    // Validation
+    if (!contractEmployeeData.employee_name || !contractEmployeeData.employee_number || 
+        !contractEmployeeData.department || !contractEmployeeData.position ||
+        !contractEmployeeData.start_date || !contractEmployeeData.base_salary) {
+        showAlert('필수 항목을 모두 입력해주세요.', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await apiCall('/contracts/with-employee', {
+            method: 'POST',
+            body: JSON.stringify(contractEmployeeData)
+        });
+        
+        showAlert('직원과 근로계약서가 성공적으로 생성되었습니다!', 'success');
+        
+        // Close modal and refresh
+        bootstrap.Modal.getInstance(document.getElementById('contractEmployeeModal')).hide();
+        loadContracts();
+        
+        // Also refresh employees list if currently shown
+        if (currentEmployees.length > 0) {
+            loadEmployees();
+        }
+        
+    } catch (error) {
+        showAlert(error.message, 'danger');
+    }
+}
+
+// Enhanced Employee Save Function
+async function saveEmployeeWithContract() {
+    const form = document.getElementById('employeeForm');
+    const employeeId = document.getElementById('employeeId').value;
+    const generateContract = document.getElementById('generateContract').checked;
+    
+    let employeeData = {
+        name: document.getElementById('employeeName').value,
+        employee_number: document.getElementById('employeeNumber').value,
+        department: document.getElementById('department').value,
+        position: document.getElementById('position').value,
+        hire_date: document.getElementById('hireDate').value,
+        base_salary: parseFloat(document.getElementById('salary').value) || 0,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        address: document.getElementById('address').value,
+        generate_contract: generateContract
+    };
+    
+    // Add contract-specific fields if contract generation is enabled
+    if (generateContract) {
+        employeeData.contract_type = document.getElementById('contractType').value || 'permanent';
+        employeeData.workplace = document.getElementById('workplace').value || '본사';
+        employeeData.generate_document = document.getElementById('generateDocument').checked;
+    }
+    
+    if (!employeeData.name || !employeeData.employee_number || !employeeData.department || 
+        !employeeData.position || !employeeData.hire_date) {
+        showAlert('필수 항목을 모두 입력해주세요.', 'warning');
+        return;
+    }
+    
+    try {
+        const method = employeeId ? 'PUT' : 'POST';
+        let endpoint = employeeId ? `/employees/${employeeId}` : '/employees';
+        
+        // Use enhanced endpoint if generating contract and creating new employee
+        if (!employeeId && generateContract) {
+            endpoint = '/employees/with-contract';
+        }
+        
+        const response = await apiCall(endpoint, {
+            method: method,
+            body: JSON.stringify(employeeData)
+        });
+        
+        let message = `직원이 성공적으로 ${employeeId ? '수정' : '추가'}되었습니다.`;
+        if (generateContract && !employeeId) {
+            message = '직원과 근로계약서가 성공적으로 생성되었습니다!';
+        }
+        
+        showAlert(message, 'success');
+        
+        // Close modal and refresh list
+        bootstrap.Modal.getInstance(document.getElementById('employeeModal')).hide();
+        loadEmployees();
+        
+    } catch (error) {
+        showAlert(error.message, 'danger');
+    }
+}
+
+// Contract utility functions
+function getContractTypeLabel(type) {
+    const types = {
+        'permanent': '정규직',
+        'temporary': '계약직',
+        'contract': '프리랜서',
+        'intern': '인턴'
+    };
+    return types[type] || type;
+}
+
+async function generateContractPDF(employeeId) {
+    try {
+        const response = await apiCall(`/documents/generate/contract?employee_id=${employeeId}`, {
+            method: 'POST'
+        });
+        
+        showAlert('근로계약서 PDF가 생성되었습니다.', 'success');
+    } catch (error) {
+        showAlert(error.message, 'danger');
+    }
+}
+
+function viewContract(id) {
+    // Implement contract viewing functionality
+    showAlert('계약서 상세보기 기능 개발 예정', 'info');
+}
+
+function editContract(id) {
+    // Implement contract editing functionality
+    showAlert('계약서 수정 기능 개발 예정', 'info');
 }

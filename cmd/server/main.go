@@ -78,6 +78,7 @@ func main() {
 			{
 				employees.GET("", handlers.GetEmployees)
 				employees.POST("", middleware.RequireRole("admin", "hr"), handlers.CreateEmployee)
+				employees.POST("/with-contract", middleware.RequireRole("admin", "hr"), handlers.CreateEmployeeWithContract)
 				employees.GET("/:id", handlers.GetEmployee)
 				employees.PUT("/:id", middleware.RequireRole("admin", "hr"), handlers.UpdateEmployee)
 				employees.DELETE("/:id", middleware.RequireRole("admin"), handlers.DeleteEmployee)
@@ -88,6 +89,7 @@ func main() {
 			{
 				contracts.GET("", handlers.GetContracts)
 				contracts.POST("", middleware.RequireRole("admin", "hr"), handlers.CreateContract)
+				contracts.POST("/with-employee", middleware.RequireRole("admin", "hr"), handlers.CreateContractWithEmployee)
 				contracts.GET("/:id", handlers.GetContract)
 				contracts.PUT("/:id", middleware.RequireRole("admin", "hr"), handlers.UpdateContract)
 				contracts.DELETE("/:id", middleware.RequireRole("admin"), handlers.DeleteContract)

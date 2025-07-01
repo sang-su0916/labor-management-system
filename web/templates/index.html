@@ -101,6 +101,17 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Contract Management -->
+                                <div class="col-md-3 mb-3">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">계약서 관리</h5>
+                                            <p class="card-text">근로계약서 작성 및 관리</p>
+                                            <button class="btn btn-secondary" onclick="loadContracts()">계약서 현황</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -207,6 +218,46 @@
                         <div class="mb-3">
                             <label for="address" class="form-label">주소</label>
                             <textarea class="form-control" id="address" rows="2"></textarea>
+                        </div>
+                        
+                        <hr>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="generateContract">
+                                <label class="form-check-label" for="generateContract">
+                                    <strong>근로계약서 자동 생성</strong>
+                                </label>
+                            </div>
+                            <small class="text-muted">체크하면 직원 등록과 동시에 기본 근로계약서가 생성됩니다.</small>
+                        </div>
+                        
+                        <div id="contractOptions" class="d-none">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="contractType" class="form-label">계약 유형</label>
+                                        <select class="form-select" id="contractType">
+                                            <option value="permanent">정규직</option>
+                                            <option value="temporary">계약직</option>
+                                            <option value="contract">프리랜서</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="workplace" class="form-label">근무지</label>
+                                        <input type="text" class="form-control" id="workplace" value="본사">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="generateDocument">
+                                    <label class="form-check-label" for="generateDocument">
+                                        PDF 문서도 자동 생성
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -380,6 +431,131 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
                     <button type="button" class="btn btn-primary" onclick="saveLeaveRequest()">신청</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contract + Employee Modal -->
+    <div class="modal fade" id="contractEmployeeModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">신규 직원 + 근로계약서 작성</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="contractEmployeeForm">
+                        <div class="row">
+                            <!-- Employee Information -->
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-primary">👤 직원 정보</h6>
+                                <div class="mb-3">
+                                    <label for="ce_name" class="form-label">이름 *</label>
+                                    <input type="text" class="form-control" id="ce_name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ce_employeeNumber" class="form-label">사번 *</label>
+                                    <input type="text" class="form-control" id="ce_employeeNumber" required>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="ce_department" class="form-label">부서 *</label>
+                                            <select class="form-select" id="ce_department" required>
+                                                <option value="">부서 선택</option>
+                                                <option value="경영팀">경영팀</option>
+                                                <option value="인사팀">인사팀</option>
+                                                <option value="개발팀">개발팀</option>
+                                                <option value="영업팀">영업팀</option>
+                                                <option value="마케팅팀">마케팅팀</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="ce_position" class="form-label">직급 *</label>
+                                            <select class="form-select" id="ce_position" required>
+                                                <option value="">직급 선택</option>
+                                                <option value="사원">사원</option>
+                                                <option value="주임">주임</option>
+                                                <option value="대리">대리</option>
+                                                <option value="과장">과장</option>
+                                                <option value="차장">차장</option>
+                                                <option value="부장">부장</option>
+                                                <option value="이사">이사</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ce_phone" class="form-label">전화번호</label>
+                                    <input type="tel" class="form-control" id="ce_phone">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ce_email" class="form-label">이메일</label>
+                                    <input type="email" class="form-control" id="ce_email">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ce_address" class="form-label">주소</label>
+                                    <textarea class="form-control" id="ce_address" rows="2"></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- Contract Information -->
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-success">📋 계약 정보</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="ce_contractType" class="form-label">계약 유형 *</label>
+                                            <select class="form-select" id="ce_contractType" required>
+                                                <option value="permanent">정규직</option>
+                                                <option value="temporary">계약직</option>
+                                                <option value="contract">프리랜서</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="ce_startDate" class="form-label">계약 시작일 *</label>
+                                            <input type="date" class="form-control" id="ce_startDate" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ce_workplace" class="form-label">근무지 *</label>
+                                    <input type="text" class="form-control" id="ce_workplace" value="본사" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ce_workingHours" class="form-label">근무시간 *</label>
+                                    <input type="text" class="form-control" id="ce_workingHours" value="09:00-18:00" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ce_workDays" class="form-label">근무요일 *</label>
+                                    <input type="text" class="form-control" id="ce_workDays" value="월-금" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ce_baseSalary" class="form-label">기본급 *</label>
+                                    <input type="number" class="form-control" id="ce_baseSalary" min="0" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ce_jobDescription" class="form-label">직무 내용</label>
+                                    <textarea class="form-control" id="ce_jobDescription" rows="2" placeholder="담당 업무를 입력하세요"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ce_benefits" class="form-label">복리후생</label>
+                                    <input type="text" class="form-control" id="ce_benefits" value="4대보험, 연차, 퇴직금">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-success" onclick="saveContractWithEmployee()">
+                        <i class="fas fa-plus"></i> 직원 + 계약서 생성
+                    </button>
                 </div>
             </div>
         </div>
