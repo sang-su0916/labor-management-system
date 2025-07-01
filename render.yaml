@@ -4,46 +4,56 @@ services:
     env: go
     plan: free
     buildCommand: |
-      echo 'Build starting...'
+      set -e
+      echo 'Step 1: Environment check'
       pwd
-      ls -la
       go version
+      echo 'Step 2: Dependencies'
       go mod download
       go mod verify
-      echo 'Creating bin directory...'
+      echo 'Step 3: Source verification'
+      ls -la cmd/server/
+      cat cmd/server/main.go | head -20
+      echo 'Step 4: Clean build'
+      rm -rf bin/
       mkdir -p bin
-      echo 'Building application with CGO...'
-      if CGO_ENABLED=1 GOOS=linux go build -v -o bin/main ./cmd/server/main.go; then
-        echo 'CGO build successful'
-      else
-        echo 'CGO build failed, trying without CGO...'
-        if CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main.go; then
-          echo 'Non-CGO build successful'
-        else
-          echo 'Trying alternative path...'
-          if CGO_ENABLED=1 GOOS=linux go build -v -o bin/main cmd/server/main.go; then
-            echo 'Alternative CGO build successful'
-          else
-            echo 'All build attempts failed'
-            echo 'Debug info:'
-            ls -la cmd/server/
-            go env
+      echo 'Step 5: Build attempt 1 - Simple CGO disabled'
+      CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main.go 2>&1 || BUILD1_FAILED=1
+      if [ -f bin/main ]; then
+        echo 'SUCCESS: Simple CGO disabled build completed'
+        ls -la bin/main
+        file bin/main
+      elif [ "$BUILD1_FAILED" = "1" ]; then
+        echo 'Step 6: Build attempt 2 - PostgreSQL specific'
+        rm -f bin/main
+        echo 'Copying PostgreSQL database init...'
+        cp database/init_postgres.go database/init.go
+        CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main.go 2>&1 || BUILD2_FAILED=1
+        if [ -f bin/main ]; then
+          echo 'SUCCESS: PostgreSQL specific build completed'
+          ls -la bin/main
+          file bin/main
+        elif [ "$BUILD2_FAILED" = "1" ]; then
+          echo 'Step 7: Build attempt 3 - Simple build script'
+          chmod +x build.sh
+          ./build.sh || BUILD3_FAILED=1
+          if [ -f bin/main ]; then
+            echo 'SUCCESS: Build script completed'
+            ls -la bin/main
+            file bin/main
+          elif [ "$BUILD3_FAILED" = "1" ]; then
+            echo 'FATAL: All build attempts failed'
+            echo 'Go environment:'
+            go env | grep -E '(GOOS|GOARCH|CGO)'
+            echo 'Available files:'
+            find . -name "*.go" | head -10
             exit 1
           fi
         fi
       fi
-      echo 'Checking build result...'
-      ls -la bin/
-      if [ -f bin/main ]; then
-        echo 'Binary created successfully'
-        file bin/main
-        chmod +x bin/main
-      else
-        echo 'Binary file not found after build'
-        exit 1
-      fi
+      chmod +x bin/main
       chmod +x start-render.sh
-      echo 'Build process completed'
+      echo 'Build completed successfully'
     startCommand: ./start-render.sh
     envVars:
       - key: PORT
