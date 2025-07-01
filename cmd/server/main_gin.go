@@ -72,6 +72,7 @@ func main() {
 		
 		// 임시 로그인 로직 (admin/admin)
 		if loginData.Username == "admin" && loginData.Password == "admin" {
+			c.Header("Content-Type", "application/json")
 			c.JSON(http.StatusOK, gin.H{
 				"success": true,
 				"message": "Login successful",
@@ -83,6 +84,7 @@ func main() {
 				},
 			})
 		} else {
+			c.Header("Content-Type", "application/json")
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
 				"message": "Invalid credentials",
