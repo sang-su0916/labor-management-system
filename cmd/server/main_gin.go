@@ -124,7 +124,7 @@ func main() {
             <div class="card">
                 <h3>직원 관리</h3>
                 <p>직원 정보 등록, 수정, 조회</p>
-                <a href="#" class="btn">직원 목록</a>
+                <a href="/employees" class="btn">직원 목록</a>
                 <a href="#" class="btn">신규 등록</a>
             </div>
             <div class="card">
@@ -149,6 +149,23 @@ func main() {
     </div>
 </body>
 </html>`
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		c.String(http.StatusOK, html)
+	})
+
+	// Employee management APIs
+	r.GET("/api/employees", func(c *gin.Context) {
+		employees := []gin.H{
+			{"id": 1, "name": "김철수", "position": "개발자", "department": "IT부", "salary": 5000000},
+			{"id": 2, "name": "이영희", "position": "디자이너", "department": "디자인부", "salary": 4500000},
+			{"id": 3, "name": "박민수", "position": "매니저", "department": "영업부", "salary": 5500000},
+		}
+		c.JSON(http.StatusOK, gin.H{"employees": employees})
+	})
+
+	// Employee list page
+	r.GET("/employees", func(c *gin.Context) {
+		html := `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>직원 목록</title><style>body{font-family:Arial;margin:0;padding:0;background:#f8f9fa}.header{background:#007bff;color:white;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center}.main{padding:2rem}.table{width:100%;background:white;border-radius:8px;overflow:hidden;box-shadow:0 2px 4px rgba(0,0,0,0.1)}th,td{padding:1rem;text-align:left;border-bottom:1px solid #eee}th{background:#f8f9fa}.btn{display:inline-block;padding:0.5rem 1rem;background:#007bff;color:white;text-decoration:none;border-radius:4px;margin:0.5rem 0}</style></head><body><div class="header"><h1>직원 목록</h1><a href="/dashboard" class="btn">대시보드</a></div><div class="main"><table class="table"><thead><tr><th>ID</th><th>이름</th><th>직책</th><th>부서</th><th>급여</th></tr></thead><tbody id="employeeList"></tbody></table></div><script>fetch('/api/employees').then(r=>r.json()).then(data=>{const tbody=document.getElementById('employeeList');data.employees.forEach(emp=>{tbody.innerHTML+=`<tr><td>${emp.id}</td><td>${emp.name}</td><td>${emp.position}</td><td>${emp.department}</td><td>${emp.salary.toLocaleString()}원</td></tr>`})});</script></body></html>`
 		c.Header("Content-Type", "text/html; charset=utf-8")
 		c.String(http.StatusOK, html)
 	})
