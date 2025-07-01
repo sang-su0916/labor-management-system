@@ -45,6 +45,41 @@ func main() {
 		})
 	})
 
+	// Login API endpoint
+	r.POST("/api/auth/login", func(c *gin.Context) {
+		var loginData struct {
+			Username string `json:"username"`
+			Password string `json:"password"`
+		}
+		
+		if err := c.ShouldBindJSON(&loginData); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"message": "Invalid request format",
+			})
+			return
+		}
+		
+		// 임시 로그인 로직 (admin/admin)
+		if loginData.Username == "admin" && loginData.Password == "admin" {
+			c.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"message": "Login successful",
+				"token":   "temp_token_12345",
+				"user": gin.H{
+					"id":       1,
+					"username": "admin",
+					"role":     "admin",
+				},
+			})
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"message": "Invalid credentials",
+			})
+		}
+	})
+
 	// Get port from environment
 	port := os.Getenv("PORT")
 	if port == "" {
