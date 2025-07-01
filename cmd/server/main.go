@@ -23,6 +23,11 @@ func main() {
 		gin.SetMode(mode)
 	}
 
+	// Log current working directory for debugging
+	if cwd, err := os.Getwd(); err == nil {
+		log.Printf("Current working directory: %s", cwd)
+	}
+
 	// Initialize database
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
@@ -92,6 +97,12 @@ func main() {
 
 	// Public routes
 	r.GET("/", func(c *gin.Context) {
+		// Check if templates are loaded
+		if !templateFound {
+			// Fallback response when templates are not found
+			c.String(http.StatusOK, "Hello from Labor Management System!")
+			return
+		}
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"title": "노무관리 시스템",
 		})

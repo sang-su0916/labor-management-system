@@ -5,66 +5,28 @@ services:
     plan: free
     buildCommand: |
       set -e
-      echo 'Step 1: Environment check'
-      pwd
-      go version
-      echo 'Step 2: Dependencies and Build Preparation'
+      echo '🔨 Building Labor Management System...'
+      echo 'Current directory: $(pwd)'
+      ls -la
+      
+      echo '📦 Installing dependencies...'
       go mod download
       go mod tidy
-      echo 'Checking if Gin is available...'
-      go list -m github.com/gin-gonic/gin || echo 'Gin not found, adding...'
-      go get github.com/gin-gonic/gin@latest
-      go mod download github.com/gin-gonic/gin
-      go mod tidy
-      echo 'Verifying Gin installation:'
-      go list -m github.com/gin-gonic/gin
-      go mod verify
-      echo 'Step 3: Source verification'
-      ls -la cmd/server/
-      echo 'Step 4: Clean build'
-      rm -rf bin/
-      mkdir -p bin
-      echo 'Step 5: Build attempt 1 - Gin framework test (verified working)'
-      echo 'Using Gin server: main_gin.go'
-      ls -la cmd/server/main_gin.go
-      echo 'Testing Gin availability:'
-      go list -m github.com/gin-gonic/gin
-      CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main_gin.go 2>&1 || BUILD1_FAILED=1
-      if [ -f bin/main ]; then
-        echo 'SUCCESS: Gin framework build completed'
-        ls -la bin/main
-        file bin/main
-        echo 'Binary should start Gin server on 0.0.0.0:10000'
-      elif [ "$BUILD1_FAILED" = "1" ]; then
-        echo 'Step 6: Build attempt 2 - Fallback to simple server'
-        rm -f bin/main
-        echo 'Using simple server: main_simple.go'
-        CGO_ENABLED=0 GOOS=linux go build -v -o bin/main ./cmd/server/main_simple.go 2>&1 || BUILD2_FAILED=1
-        if [ -f bin/main ]; then
-          echo 'SUCCESS: PostgreSQL specific build completed'
-          ls -la bin/main
-          file bin/main
-        elif [ "$BUILD2_FAILED" = "1" ]; then
-          echo 'Step 7: Build attempt 3 - Simple build script'
-          chmod +x build.sh
-          ./build.sh || BUILD3_FAILED=1
-          if [ -f bin/main ]; then
-            echo 'SUCCESS: Build script completed'
-            ls -la bin/main
-            file bin/main
-          elif [ "$BUILD3_FAILED" = "1" ]; then
-            echo 'FATAL: All build attempts failed'
-            echo 'Go environment:'
-            go env | grep -E '(GOOS|GOARCH|CGO)'
-            echo 'Available files:'
-            find . -name "*.go" | head -10
-            exit 1
-          fi
-        fi
+      
+      echo '🏗️ Building application...'
+      CGO_ENABLED=1 go build -o bin/main cmd/server/main.go
+      
+      echo '📁 Verifying web assets...'
+      if [ -d "web" ]; then
+        echo '✅ Web directory found'
+        ls -la web/
+      else
+        echo '❌ Web directory not found!'
       fi
+      
       chmod +x bin/main
       chmod +x start-render.sh
-      echo 'Build completed successfully'
+      echo '✅ Build complete!'
     startCommand: ./start-render.sh
     envVars:
       - key: PORT
