@@ -9,6 +9,22 @@ echo "현재 작업 디렉토리: $(pwd)"
 echo "파일 목록:"
 ls -la
 
+echo "📁 Web 디렉토리 확인:"
+if [ -d "web" ]; then
+    echo "✅ web 디렉토리 존재"
+    echo "web 디렉토리 내용:"
+    ls -la web/
+    if [ -d "web/templates" ]; then
+        echo "✅ web/templates 디렉토리 존재"
+        echo "템플릿 파일들:"
+        ls -la web/templates/
+    else
+        echo "❌ web/templates 디렉토리 없음!"
+    fi
+else
+    echo "❌ web 디렉토리 없음!"
+fi
+
 # 필요한 디렉토리 생성
 mkdir -p ./documents ./uploads ./logs
 

@@ -60,19 +60,35 @@ func main() {
 		log.Println("Warning: No static files directory found")
 	}
 	
-	// Load HTML templates - try multiple paths
-	templatePaths := []string{"web/templates/*", "./web/templates/*", "/app/web/templates/*"}
+	// Load HTML templates - try multiple paths with debugging
+	templatePaths := []string{"web/templates/*", "./web/templates/*", "/app/web/templates/*", "templates/*"}
 	templateFound := false
+	
+	// First, let's check what files exist
+	log.Println("Checking for template directories...")
+	for _, dir := range []string{"web/templates", "./web/templates", "/app/web/templates", "templates"} {
+		if info, err := os.Stat(dir); err == nil && info.IsDir() {
+			log.Printf("Found directory: %s", dir)
+			files, _ := os.ReadDir(dir)
+			for _, file := range files {
+				log.Printf("  - %s", file.Name())
+			}
+		}
+	}
+	
 	for _, pattern := range templatePaths {
-		if matches, _ := filepath.Glob(pattern); len(matches) > 0 {
+		matches, err := filepath.Glob(pattern)
+		log.Printf("Trying pattern %s: %d matches, error: %v", pattern, len(matches), err)
+		if len(matches) > 0 {
 			r.LoadHTMLGlob(pattern)
-			log.Printf("Templates loaded from: %s", pattern)
+			log.Printf("Templates loaded from: %s (found %d files)", pattern, len(matches))
 			templateFound = true
 			break
 		}
 	}
 	if !templateFound {
-		log.Println("Warning: No template files found")
+		log.Println("ERROR: No template files found in any of the expected locations")
+		log.Println("This will cause the application to show fallback text instead of the actual UI")
 	}
 
 	// Health check endpoint
@@ -99,8 +115,8 @@ func main() {
 	r.GET("/", func(c *gin.Context) {
 		// Check if templates are loaded
 		if !templateFound {
-			// Fallback response when templates are not found
-			c.String(http.StatusOK, "Hello from Labor Management System!")
+			// More detailed error response
+			c.String(http.StatusOK, "Template Loading Error\n\nThe application is running but cannot find the HTML templates.\n\nExpected locations:\n- web/templates/\n- ./web/templates/\n- /app/web/templates/\n\nPlease check the deployment logs for more information.")
 			return
 		}
 		c.HTML(http.StatusOK, "index.html", gin.H{
