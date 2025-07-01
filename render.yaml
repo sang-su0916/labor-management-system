@@ -4,10 +4,14 @@ services:
     env: go
     plan: free
     buildCommand: |
+      go version
       go mod download
+      go mod verify
       mkdir -p bin
-      CGO_ENABLED=1 go build -o bin/main cmd/server/main.go
+      CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o bin/main cmd/server/main.go
       chmod +x start-render.sh
+      ls -la bin/
+      file bin/main
     startCommand: ./start-render.sh
     envVars:
       - key: PORT

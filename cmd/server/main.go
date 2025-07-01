@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -71,9 +72,21 @@ func main() {
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
+		// Test database connection
+		if err := database.DB.Ping(); err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status": "unhealthy",
+				"service": "labor-management-system",
+				"error": "database connection failed",
+			})
+			return
+		}
+		
 		c.JSON(http.StatusOK, gin.H{
 			"status": "healthy",
 			"service": "labor-management-system",
+			"database": "connected",
+			"timestamp": time.Now().UTC(),
 		})
 	})
 

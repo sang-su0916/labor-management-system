@@ -39,4 +39,12 @@ else
 fi
 
 echo "🎯 서버 시작 중..."
-exec ./main 
+echo "바이너리 파일 확인:"
+ls -la bin/main
+file bin/main
+
+# 바이너리 실행 권한 확인 및 부여
+chmod +x bin/main
+
+echo "서버 실행..."
+exec ./bin/main 
